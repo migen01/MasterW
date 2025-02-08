@@ -1,6 +1,21 @@
-from datasets import load_dataset
-squad_dataset = load_dataset('squad', split='validation')
-#print(squad_dataset[0:2])  # Print the first entry
+from lnn import And, Fact, Proposition,Model
 
-print(squad_dataset.train_test_split(test_size=0.2))
-# For a different dataset format:
+# Rules
+EPL = Proposition("Santa Monica, California")
+BornInEngland = Proposition("California")
+AND = And(EPL, BornInEngland)
+model = Model()
+
+# Data
+EPL.add_data(Fact.TRUE)
+BornInEngland.add_data(Fact.UNKNOWN)
+model.add_data([AND])
+
+# Reasoning
+AND.upward()
+AND.print()
+
+model.infer()
+
+# Check inference results
+print("WetGround truth value:", model[BornInEngland].state)
