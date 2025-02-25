@@ -11,7 +11,7 @@ modela = SentenceTransformer('sentence-transformers/multi-qa-MiniLM-L6-cos-v1')
 def preprocess_text(text):
     # Lowercase
     text = text.lower()
-    # Remove extra whitespace
+    # Remove whitespace
     text = ' '.join(text.split())
     return text
     
