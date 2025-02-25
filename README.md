@@ -1,4 +1,4 @@
-# MasterW
+# LLM Part
 
 "export OPENAI_API_KEY='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"
 
@@ -57,3 +57,5 @@ Average Precision: Measures the proportion of relevant words in the prediction.
 Average Recall: Measures the proportion of relevant words from the ground truth captured in the prediction.
 Average F1 Score: Harmonic mean of precision and recall.
 Time Taken: Total time taken to process the dataset subset.
+
+# LNN Part
