@@ -61,7 +61,7 @@ def extract_knowledge_from_squad_entry(entry):
     response_text = response.choices[0].message.content.strip()
 
     try:
-        data = json.loads(response_text)  # Ensure JSON format
+        data = json.loads(response_text)  # JSON format
     except json.JSONDecodeError:
        # print(" Error: Invalid JSON. Response received:\n", response_text)
         return {"rules": [], "facts": []}
@@ -96,7 +96,7 @@ def reasoning_with_squad(entry):
     }
 
     for inferred_fact in inferred_facts:
-       # print(f"✅ Inferring: {inferred_fact}")
+       # print(f"Inferring: {inferred_fact}")
         lnn.add_fact(inferred_fact)
 
     # Run inference
