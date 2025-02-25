@@ -14,6 +14,7 @@ def preprocess_text(text):
     return text
 
 client = OpenAI()
+#export OPENAI_API_KEY='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'
 
 def get_llm_response(entry):
     context = entry['context']
