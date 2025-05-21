@@ -4,9 +4,9 @@ import time
 from openai import OpenAI
 from tqdm import tqdm
 
-from lnn_hallucination_detection import check_hallucination
-from LNN import RuleBasedLogicalNetwork
-from F1_LNN import answer_found_f1
+from OPENAI_API.lnn_hallucination_detection import check_hallucination
+from OPENAI_API.LNN import RuleBasedLogicalNetwork
+from OPENAI_API.F1_LNN import answer_found_f1
 
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize

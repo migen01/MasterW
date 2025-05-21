@@ -2,7 +2,7 @@ from os import fsync
 import time
 from openai import OpenAI
 from tqdm import tqdm
-from llm_hallucination_detection import check_hallucination
+from OPENAI_API.llm_hallucination_detection import check_hallucination
 
 from datasets import load_dataset
 squad_dataset = load_dataset('squad', split='validation')
