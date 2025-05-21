@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# LLM 
-=======
 # LLM Part
->>>>>>> cd6b63f (commi)
 
 This script evaluates the performance of a large language model (LLM) using the SQuAD validation dataset. It calculates metrics such as precision, recall, 
 and F1 score to compare the model's predictions against the ground truth answers provided in the dataset.
