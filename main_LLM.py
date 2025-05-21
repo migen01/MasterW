@@ -6,7 +6,10 @@ from llm_hallucination_detection import check_hallucination
 
 from datasets import load_dataset
 squad_dataset = load_dataset('squad', split='validation')
-top_5_entries = squad_dataset.select(range(100))
+squad_dataset_v2 = load_dataset('squad_v2',split='validation')
+
+raw_top_entries = squad_dataset_v2.select(range(220))
+top_5_entries = raw_top_entries.filter(lambda example: example.get('answers', {}).get('text', []))
 
 def preprocess_text(text):
     text = text.lower()# Lowercase
@@ -18,7 +21,8 @@ client = OpenAI()
 def get_llm_response(entry):
     context = entry['context']
     question = entry['question']
-    correct_answer = entry['answers']['text'][0]  # First answer as correct answer
+    c_ans = entry.get('answers', {}).get('text', [])
+    correct_answer = c_ans[0] if c_ans else ""  # First answer as correct answer
 
     messages = [
         {"role": "system", "content": "You are a helpful assistant.Give answers only with the main words"}, #chat model message
@@ -36,7 +40,7 @@ def get_llm_response(entry):
     llm_answer = llm_answer.lower()
     correct_answer=correct_answer.lower() # Extract answer 
 
-    #print(llm_answer,correct_answer)
+    print(f"Generated answer: {llm_answer}",f"Correct: {correct_answer}")
     return llm_answer, correct_answer
 
 def f1_score(prediction, correct_answer):

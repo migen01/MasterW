@@ -17,10 +17,12 @@ nltk.download('punkt_tab')
 stemmer = PorterStemmer()
 client = OpenAI()
 
-def load_squad_dataset(num_samples=20):
-    squad_dataset = load_dataset("squad", split="validation")
-    dataset_subset = squad_dataset.select(range(num_samples))
-    return dataset_subset
+def load_squad_dataset(num_samples):
+    #squad_dataset = load_dataset("squad", split="validation")
+    squad_dataset_v2 = load_dataset('squad_v2',split='validation')
+    raw_top_entries = squad_dataset_v2.select(range(num_samples))
+    top_5_entries = raw_top_entries.filter(lambda example: example.get('answers', {}).get('text', []))
+    return top_5_entries
 
 def extract_knowledge_from_squad_entry(entry):
     
@@ -170,7 +172,7 @@ def answer_found(correct_answer, inferred_facts):
     return found_match, float(best_f1)  
 
 def main():
-    dataset = load_squad_dataset(100)  
+    dataset = load_squad_dataset(200)  
     hallucination_count = 0
     total_f1_score = 0.0  
     total_examples = 0  
@@ -203,8 +205,12 @@ def main():
             is_correct,f1_score_value = answer_found(correct_answer, results)
             #print(f"DEBUG: is_correct: {is_correct}, f1_score_value: {f1_score_value}, type: {type(f1_score_value)}")
             context = entry["context"]
-            recall, precision = answer_found_f1(correct_answer, results, context)
-            
+            #recall, precision = answer_found_f1(correct_answer, results, context)
+            try:
+                recall, precision = answer_found_f1(correct_answer, results, context)
+            except (TypeError, ValueError):
+                recall, precision = 0.0, 0.0
+
             # Update F1 score 
             total_precision += precision
             total_recall += recall
@@ -219,7 +225,7 @@ def main():
 
             if hallucination:
                 hallucination_count += 1
-               # print(f" Hallucination detected (LLM): {reason}")
+                #print(f" Hallucination detected (LLM): {reason}")
 
             print(f"\n Question: {entry['question']}")
             print(f" Correct Answer: {correct_answer}")
@@ -232,14 +238,14 @@ def main():
 
     end_time = time.time()
 
-    average_precision = total_precision / total_examples if total_examples > 0 else 0
-    average_recall = total_recall / total_examples if total_examples > 0 else 0
+    #average_precision = total_precision / total_examples if total_examples > 0 else 0
+    #average_recall = total_recall / total_examples if total_examples > 0 else 0
     average_f1 = total_f1_score / total_examples if total_examples > 0 else 0
     elapsed_time = end_time - start_time
 
     print("\nFinal Results:")
-    print(f" Average Precision: {average_precision:.2f}")
-    print(f" Average Recall: {average_recall:.2f}")
+    #print(f" Average Precision: {average_precision:.2f}")
+    #print(f" Average Recall: {average_recall:.2f}")
     print(f" Average F1 Score: {average_f1:.2f}")
     print(f"Time Taken: {elapsed_time:.2f} seconds")
     print(f" Total Hallucinations Detected: {hallucination_count}/{total_examples} examples")
