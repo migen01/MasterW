@@ -22,7 +22,7 @@ def check_hallucination(llm_answer, context, correct_answer):
     fuzzy_score = fuzz.ratio(llm_answer, correct_answer) / 100.0  # Normalize fuzzy score
     #print(f" Fuzzy Match Score: {fuzzy_score:.2f}")
 
-    if fuzzy_score > 0.75:  
+    if fuzzy_score > 0.79:  
         #print(" No hallucination (Fuzzy Match)")
         return False, "No hallucination detected (Fuzzy match)"
 
@@ -31,7 +31,7 @@ def check_hallucination(llm_answer, context, correct_answer):
     similarityb = cosine_similarity([embeddingsb[0]], [embeddingsb[1]])[0][0]
     #print(f" Semantic Similarity Score: {similarityb:.2f}")
 
-    if similarityb >= 0.50:  
+    if similarityb >= 0.55:  
         #print("No hallucination (Semantic Match)")
         return False, "No hallucination detected (Semantic match)"
 

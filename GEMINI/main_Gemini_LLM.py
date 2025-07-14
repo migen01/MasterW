@@ -1,46 +1,44 @@
-from os import fsync
+import os
 import time
-from openai import OpenAI
 from tqdm import tqdm
-from OPENAI_API.llm_hallucination_detection import check_hallucination
-
+from hallucination_context import check_hallucination
+import google.generativeai as genai
 from datasets import load_dataset
-squad_dataset = load_dataset('squad', split='validation')
-squad_dataset_v2 = load_dataset('squad_v2',split='validation')
+from hallucination_no_context import check_hallucination_no_context
 
-raw_top_entries = squad_dataset_v2.select(range(220))
-top_5_entries = raw_top_entries.filter(lambda example: example.get('answers', {}).get('text', []))
+genai.configure(api_key="AIzaSyDPCFe2bnYno6Uu7FnZQffI4SBk3Md6f2Q")
+# Use the specific Gemini model 
+model = genai.GenerativeModel(model_name="gemini-2.0-flash")
+
+#squad_dataset = load_dataset('squad', split='validation')
+squad_dataset = load_dataset('squad_v2',split='validation')
+
+raw_top_entries = squad_dataset.select(range(217)) #for squadv2 - 217 is 100 examples(because of filtering)
+all_entries = raw_top_entries.filter(lambda example: example.get('answers', {}).get('text', []))
 
 def preprocess_text(text):
-    text = text.lower()# Lowercase
-    text = ' '.join(text.split())# Remove whitespaces
+    text = text.lower()
+    text = ' '.join(text.split())
     return text
-
-client = OpenAI()
 
 def get_llm_response(entry):
     context = entry['context']
     question = entry['question']
     c_ans = entry.get('answers', {}).get('text', [])
-    correct_answer = c_ans[0] if c_ans else ""  # First answer as correct answer
+    correct_answer = c_ans[0] if c_ans else ""
 
-    messages = [
-        {"role": "system", "content": "You are a helpful assistant.Give answers only with the main words"}, #chat model message
-        {"role": "user", "content": f"Context: {context}\nQuestion: {question}\nAnswer:"}
-    ]
+    prompt = f"""You are a helpful assistant. Give answers only with the main words.
+Context: {context}
+Question: {question}
+Answer:"""
 
-    completion = client.chat.completions.create(
-        model="gpt-4o",  
-        messages=messages,
-        max_tokens=10,
-        temperature=0
-    )
-    
-    llm_answer = completion.choices[0].message.content.strip() 
-    llm_answer = llm_answer.lower()
-    correct_answer=correct_answer.lower() # Extract answer 
+    # Call Gemini 2.0 Flash
+    response = model.generate_content(prompt)
 
-    print(f"Generated answer: {llm_answer}",f"Correct: {correct_answer}")
+    llm_answer = response.text.strip().lower()
+    correct_answer = correct_answer.lower()
+
+    print(f"Generated answer: {llm_answer}", f"Correct: {correct_answer}")
     return llm_answer, correct_answer
 
 def f1_score(prediction, correct_answer):
@@ -68,10 +66,6 @@ def check_constrains(answer, context):
     penalty += context_word_constraint(answer, context)
     return penalty
 
-def compare_answers(prediction, correct_answer):
-   
-   return f1_score(prediction, correct_answer) 
-
 def logic_f1_score(prediction, correct_answer, context):
     f1 ,recall, precision = f1_score(prediction, correct_answer)
     penalty = check_constrains(prediction, context)
@@ -89,33 +83,32 @@ def main():
 
     start_time = time.time()
 
-    dataset_subset = top_5_entries
+    dataset_subset = all_entries
     total_examples = len(dataset_subset)
 
-    print("Processing dataset...")
+    print("Processing dataset...\n")
     with tqdm(total=total_examples, desc="Progress", unit="examples") as pbar:
         for entry in dataset_subset:
             llm_answer, correct_answer = get_llm_response(entry)
-            
-            # Check for hallucinations
-            hallucination, reason = check_hallucination(llm_answer, entry['context'], correct_answer)
+
+            hallucination, reason = check_hallucination_no_context(llm_answer,correct_answer)
+            #hallucination, reason = check_hallucination(llm_answer, entry['context'],correct_answer)
             if hallucination:
+                #print(f"Q: {entry['question']}")
+                print(f"Generated: {llm_answer} | Correct_: {correct_answer}")
+                print(f"Hallucination: {hallucination} — Reason: {reason}\n")
                 hallucination_count += 1
-                print(f"Hallucination detected(LLM): {reason}")
-            
-            adjusted_f1, recall ,precision = logic_f1_score(llm_answer, correct_answer, entry['context'])
-            #precision, recall, f1 = f1_score(llm_answer, correct_answer)
-                
-            # metrics
+
+            adjusted_f1, recall, precision = logic_f1_score(llm_answer, correct_answer, entry['context'])
+
             total_precision += precision
             total_recall += recall
-            total_f1 += adjusted_f1 
+            total_f1 += adjusted_f1
             num_samples += 1
             pbar.update(1)
 
     end_time = time.time()
 
-    # averages
     avg_precision = total_precision / num_samples if num_samples > 0 else 0
     avg_recall = total_recall / num_samples if num_samples > 0 else 0
     avg_f1 = total_f1 / num_samples if num_samples > 0 else 0
@@ -124,8 +117,9 @@ def main():
     print(f" - Average Precision: {avg_precision:.4f}")
     print(f" - Average Recall:    {avg_recall:.4f}")
     print(f" - Average F1 Score:  {avg_f1:.4f}")
-    print(f"Time Taken: {elapsed_time:.2f} seconds")
-    print(f"Hallucinations detected : {hallucination_count}")
+    print(f" - Total Hallucinations:         {hallucination_count}")
+    print(f" - Time Taken: {elapsed_time:.2f} seconds")
+
 
 
 if __name__ == "__main__":

@@ -3,18 +3,18 @@ import json
 import time
 from openai import OpenAI
 from tqdm import tqdm
-
-from OPENAI_API.lnn_hallucination_detection import check_hallucination
-from OPENAI_API.LNN import RuleBasedLogicalNetwork
-from OPENAI_API.F1_LNN import answer_found_f1
+from hallucination_no_context import check_hallucination_no_context
+from hallucination_context import check_hallucination
+from LNN import RuleBasedLogicalNetwork
+from F1_LNN import answer_found_f1
 
 from nltk.stem import PorterStemmer
 from nltk.tokenize import word_tokenize
 import nltk
 from fuzzywuzzy import fuzz
-
 nltk.download('punkt_tab')
 stemmer = PorterStemmer()
+
 client = OpenAI()
 
 def load_squad_dataset(num_samples):
@@ -220,9 +220,9 @@ def main():
 
             # Convert results into a readable string
             inferred_text = " ".join([" ".join(map(str, fact)) for fact in results]) if results else "No inference available"
-            
-            hallucination, reason = check_hallucination(inferred_text, entry['context'], correct_answer)
 
+            #hallucination, reason = check_hallucination_no_context(llm_answer,correct_answer)
+            hallucination, reason = check_hallucination(inferred_text, context, correct_answer)
             if hallucination:
                 hallucination_count += 1
                 #print(f" Hallucination detected (LLM): {reason}")
