@@ -38,7 +38,7 @@ precision: The precision metric.
 
     compare_answers(prediction, ground_truth) - A helper function to calculate and return the F1 score for a prediction.
 
-Main Execution Flow
+Main Execution Flow 
 Dataset Subset: Selects a small subset (top 85 entries) of the SQuAD dataset for evaluation.
 Model Evaluation: Iterates through each dataset entry, retrieves the LLM's response, and calculates metrics.
 Result Aggregation: Aggregates precision, recall, and F1 scores across all examples.
